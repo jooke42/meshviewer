@@ -367,6 +367,28 @@ bool PickedPoint(int x, int y)
 }
 
 
+myVector3D * constructRay(int x, int y)
+{
+	glm::mat4 projection_matrix = glm::perspective(glm::radians(fovy), (float)Glut_w / (float)Glut_h, zNear, zFar);
+	glm::mat4 view_matrix = glm::lookAt(glm::vec3(camera_eye.X, camera_eye.Y, camera_eye.Z),
+		glm::vec3(camera_eye.X + camera_forward.dX, camera_eye.Y + camera_forward.dY, camera_eye.Z + camera_forward.dZ),
+		glm::vec3(camera_up.dX, camera_up.dY, camera_up.dZ));
+
+	float x_c = (2.0*x) / (float)Glut_w - 1.0;
+	float y_c = (2.0*y) / (float)Glut_h - 1.0;
+
+	glm::vec4 tmp = glm::vec4(x_c, y_c, -1.0f, 1.0f);
+	tmp = glm::inverse(projection_matrix) * tmp;
+	tmp.z = -1.0f;
+	tmp.w = 0.0f;
+
+	tmp = glm::inverse(view_matrix) * tmp;
+
+	myVector3D *r = new myVector3D(tmp.x, tmp.y, tmp.z);
+	r->normalize();
+	return r;
+}
+
 //This function is called when a mouse button is pressed.
 void mouse(int button, int state, int x, int y)
 {
@@ -384,11 +406,9 @@ void mouse(int button, int state, int x, int y)
 		if (button == GLUT_LEFT_BUTTON) {
 			if (mode == GLUT_ACTIVE_CTRL)
 			{
-				glUseProgram(0);
-				pickedpoint = new myPoint3D();
-				if (!PickedPoint(x, Glut_h - y)) delete pickedpoint;
-				glUseProgram(shaderprogram);
-				menu(MENU_SELECTVERTEX);
+				cout << "Picking a point.\n";
+				myVector3D *picking_ray = constructRay(x, Glut_h - y);
+				//write code here to call functions for closest vertices/edges/faces from this ray to the mesh.
 			}
 			if (mode == GLUT_ACTIVE_SHIFT) {
 			}
@@ -583,6 +603,7 @@ void initInterface(int argc, char* argv[])
 	glutAddSubMenu("Face Operations", sm4);
 	glutAddMenuEntry("Open File", MENU_OPENFILE);
 	glutAddMenuEntry("Triangulate", MENU_TRIANGULATE);
+	glutAddMenuEntry("Check mesh", MENU_CHECK);
 	glutAddMenuEntry("Write to File", MENU_WRITE);
 	glutAddMenuEntry("Undo", MENU_UNDO);
 	glutAddMenuEntry("Generate Mesh", MENU_GENERATE);

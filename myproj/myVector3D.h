@@ -14,12 +14,11 @@ public:
 		double components[3];
 		struct { double dX, dY, dZ; };
 	};
-   
-  
   myVector3D();
 
   myVector3D(double dx, double dy, double dz);
   double operator*(myVector3D & v1);
+  double dotproduct(myVector3D & v2);
   myVector3D operator+(myVector3D & v1);
   myVector3D operator+=(const myVector3D & v);
   myVector3D operator-();

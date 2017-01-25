@@ -26,11 +26,12 @@ public:
 	void splitFaceQUADS(myFace *, myPoint3D *);
 
 	void triangulate();
-	bool triangulate(myFace *);
-
+	bool triangulate(myFace * f);
 	void clear();
 
 	myMesh(void);
 	~myMesh(void);
+	void inflateMesh(double dist);
+	void smoothenMesh(double dist);
 };
 

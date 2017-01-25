@@ -20,7 +20,7 @@ enum MENU { MENU_CATMULLCLARK, MENU_DRAWWIREFRAME, MENU_EXIT, MENU_DRAWMESH, MEN
 	MENU_CONTRACTEDGE, MENU_CONTRACTFACE, MENU_DRAWCREASE, MENU_DRAWSILHOUETTE, 
 	MENU_GENERATE, MENU_CUT, MENU_INFLATE, MENU_SELECTEDGE, MENU_SELECTFACE, MENU_SELECTVERTEX,
 	MENU_SHADINGTYPE, MENU_SMOOTHEN, MENU_SPLITEDGE, MENU_SPLITFACE, MENU_SELECTCLEAR, 
-	MENU_TRIANGULATE, MENU_UNDO, MENU_WRITE, MENU_SIMPLIFY, MENU_DRAWNORMALS, MENU_OPENFILE
+	MENU_TRIANGULATE, MENU_UNDO, MENU_WRITE, MENU_SIMPLIFY, MENU_DRAWNORMALS, MENU_OPENFILE, MENU_CHECK
 };
  
 myMesh *m;
@@ -46,8 +46,14 @@ void menu(int item)
 	case MENU_TRIANGULATE:
 		{
 			m->triangulate();
+			m->checkMesh();
 			m->computeNormals();
 			makeBuffers(m);
+			break;
+		}
+	case MENU_CHECK:
+		{
+			m->checkMesh();
 			break;
 		}
 	case MENU_SHADINGTYPE:
@@ -116,10 +122,16 @@ void menu(int item)
 		}
 	case MENU_INFLATE:
 		{
-			for (vector<myVertex *>::iterator it = m->vertices.begin(); it != m->vertices.end(); it++)
-				*((*it)->point) = *((*it)->point) + *((*it)->normal)*0.01;
-			break;
+			m->inflateMesh(0.01);
 			makeBuffers(m);
+			break;
+			
+	}
+	case MENU_SMOOTHEN:
+	{
+		m->smoothenMesh(0.05);
+		makeBuffers(m);
+		break;
 	}
 	case MENU_CATMULLCLARK:
 		{
@@ -131,8 +143,11 @@ void menu(int item)
 		}
 	case MENU_SPLITEDGE:
 		{
+			m->splitEdge(m->halfedges[0],new myPoint3D(0,0,0));
+			/*
 			if (pickedpoint != NULL && closest_edge != NULL)	
 				m->splitEdge(closest_edge, pickedpoint);
+			*/
 			clear();
 			m->computeNormals();
 			makeBuffers(m);
@@ -140,8 +155,10 @@ void menu(int item)
 		}		
 	case MENU_SPLITFACE:
 		{
-			if (pickedpoint != NULL && closest_face != NULL)	
+			m->splitFaceTRIS(m->faces[0], new myPoint3D(0, 0, 0));
+			/*if (pickedpoint != NULL && closest_face != NULL)	
 				m->splitFaceTRIS(closest_face, pickedpoint);
+				*/
 			clear();		
 			m->computeNormals();
 			makeBuffers(m);
@@ -253,17 +270,22 @@ void display()
 		vector <GLuint> silhouette_edges;
 		for (vector<myHalfedge *>::iterator it = m->halfedges.begin(); it != m->halfedges.end(); it++)
 		{
-			/**** TODO: WRITE CODE TO COMPUTE SILHOUETTE ****/
 			myHalfedge *e = (*it);
 			myVertex *v1 = (*it)->source;
 			if ((*it)->twin == NULL) continue;
 			myVertex *v2 = (*it)->twin->source;
 
-			if ( 0 /*ADD THE CONDITION TO CHECK IF THE HALFEDGE DEFINED BY (V1, V2) IS A SILHOUETTE EDGE*/ )
+			myVector3D *normal1 = (*it)->adjacent_face->normal;
+			myVector3D *normal2 = (*it)->twin->adjacent_face->normal;
+
+			myVector3D eyedirection = (camera_eye)-*(v1->point);
+			eyedirection.normalize();
+
+			if (((*normal1)*eyedirection) * ((*normal2)*eyedirection) < 0 /*CONDITION TO CHECK IF THE HALFEDGE DEFINED BY (V1, V2) IS A SILHOUETTE EDGE*/)
 			{
 				silhouette_edges.push_back(v1->index);
 				silhouette_edges.push_back(v2->index);
-			}				
+			}
 		}
 
 		GLuint silhouette_edges_buffer;
@@ -371,7 +393,7 @@ void initMesh()
 	closest_face = NULL;
 
 	m = new myMesh();
-	if (m->readFile("dolphin.obj")) {
+	if (m->readFile("cube.obj")) {
 		m->computeNormals();
 		makeBuffers(m);
 	}

@@ -14,6 +14,7 @@ myPoint3D::myPoint3D(double x, double y, double z)
 	Z = z;
 }
 
+
 myPoint3D myPoint3D::operator+(myVector3D & v1)
 {
 	return myPoint3D(X + v1.dX, Y + v1.dY, Z + v1.dZ);
@@ -77,7 +78,6 @@ double myPoint3D::dist(myPoint3D p1)
 {
 	return sqrt((p1.X - X)*(p1.X - X) + (p1.Y - Y)*(p1.Y - Y) + (p1.Z - Z)*(p1.Z - Z));
 }
-
 void myPoint3D::rotate(myVector3D & lp, double theta)
 {
 	myVector3D tmp(X, Y, Z);
@@ -92,9 +92,31 @@ void myPoint3D::print(char *s)
 
 double myPoint3D::dist(myPoint3D *p1, myPoint3D *p2)
 {
-	//distance between current point, and the segment defined by p1,p2.
-	/**** TODO ****/
-	return 0.0;
+	// distance between current point, and the segment defined by p1,p2.
+	// STILL TODO (check if good or not)
+	myVector3D v(p2->X - p1->X,
+		p2->Y - p1->Y,
+		p2->Z - p1->Z);
+
+	myVector3D w(X - p1->X,
+		Y - p1->Y,
+		Z - p2->Z);
+
+	// case : current point is before p1
+	double c1 = w.dotproduct(v);
+	if (c1 <= 0)
+		return this->dist(*p1);
+
+	// case : current point is after p2
+	double c2 = v.dotproduct(v);
+	if (c2 <= c1)
+		return this->dist(*p2);
+
+	// general case between p1 & p2
+	double b = c1 / c2;
+	myPoint3D Pb = *p1 + v*b;
+
+	return this->dist(Pb);
 }
 
 double myPoint3D::dist(myPoint3D *p1, myPoint3D *p2, myPoint3D *p3)

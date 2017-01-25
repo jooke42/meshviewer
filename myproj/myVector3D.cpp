@@ -16,6 +16,11 @@ double myVector3D::operator*(myVector3D & v1)
     return (v1.dX*dX + v1.dY*dY + v1.dZ*dZ);
 }
 
+double myVector3D::dotproduct(myVector3D & v2)
+{
+	return ((dX * v2.dX) + (dY * v2.dY) + (dZ * v2.dZ));
+}
+
 myVector3D myVector3D::operator+(myVector3D & v1)
 {
 	return myVector3D(dX+v1.dX, dY+v1.dY, dZ+v1.dZ);
