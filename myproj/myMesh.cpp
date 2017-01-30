@@ -464,7 +464,42 @@ void myMesh::splitFaceQUADS(myFace *f, myPoint3D *p)
 
 void myMesh::subdivisionCatmullClark()
 {
-	/**** TODO ****/
+	//STEP 1 compute all centroids
+	for (vector<myFace *>::iterator it = faces.begin(); it != faces.end(); it++) {
+		myFace* f = (*it);
+
+		myPoint3D c;
+		myHalfedge* e = f->adjacent_halfedge;
+
+		int totalVertices = 0;
+		do {
+			c += *e->source->point;
+			totalVertices++;
+			e = e->next;
+		} while (e = f->adjacent_halfedge);
+
+		c /= totalVertices;
+
+	}
+	
+
+	
+
+	//STEP 2 Caculate edge points
+
+
+
+	//STEP 3 Caculate edge points
+
+
+	//STEP 4 vertex-edge connection
+		//add new edge points to mesh lists
+
+
+
+	//STEP 5 face-edge connection with splitFaceQUADS()
+
+
 }
 
 

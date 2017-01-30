@@ -37,3 +37,5 @@ int myFace::totalEdges() {
 	} while (e != this->adjacent_halfedge);
 	return totalEdges;
 }
+
+
