@@ -27,3 +27,13 @@ void myFace::computeNormal()
 	
 	
 }
+
+int myFace::totalEdges() {
+	int totalEdges = 0;
+	myHalfedge* e = this->adjacent_halfedge;
+	do {
+		totalEdges++;
+		e = e->next;
+	} while (e != this->adjacent_halfedge);
+	return totalEdges;
+}

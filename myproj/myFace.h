@@ -13,6 +13,7 @@ public:
 	int index; //use this variable as you wish.
 
 	void computeNormal();
+	int totalEdges();
 	myFace(void);
 	~myFace(void);
 };

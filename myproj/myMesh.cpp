@@ -390,8 +390,76 @@ void myMesh::splitEdge(myHalfedge *e, myPoint3D *p)
 
 void myMesh::splitFaceQUADS(myFace *f, myPoint3D *p)
 {
-	/**** TODO ****/
+	myHalfedge* e = f->adjacent_halfedge;
+	vector<myHalfedge*> es;
+	int totalEdges = 0;
+	do {
+		totalEdges++;
+		es.push_back(e);
+		e = e->next;
+	} while (e != f->adjacent_halfedge);
+
+	if (totalEdges % 2 != 0)return;
+
+	myVertex* v = new myVertex();
+	vector<myHalfedge*> in;
+	vector<myHalfedge*> out;
+	vector<myFace*> nfaces;
+	nfaces.push_back(f);
+
+	for (int i = 0; i<totalEdges/2; i++) {
+		in.push_back(new myHalfedge());
+		out.push_back(new myHalfedge());
+		if (i != 0) {
+			nfaces.push_back(new myFace());
+		}
+		
+	}
+	
+	v->point = p;
+	v->originof = in[0];
+	e = f->adjacent_halfedge->next;
+	for(int i = 0;i<totalEdges/2;i++){
+		int ipo = (i + 1 )% in.size();
+		int imo = (i - 1 + in.size()) % in.size();
+
+		//out
+		out[i]->source = es[(i*2+2)%es.size()]->source;
+		out[i]->next = in[imo];
+		out[i]->prev = es[(i * 2 + 1) % es.size()];
+		es[(i * 2 + 1) % es.size()]->next = out[i];
+		out[i]->twin =  in[i];
+		out[i]->adjacent_face = nfaces[i];
+
+		//in
+		in[imo]->source = v;
+		in[imo]->next = es[(imo * 2 +2) % es.size()];
+		es[(imo * 2 + 2) % es.size()]->prev = in[imo];
+		in[imo]->prev = out[i];
+		in[imo]->twin = out[imo];
+		in[imo]->adjacent_face = nfaces[i];
+
+		//face
+		nfaces[i]->adjacent_halfedge = out[i];
+		e = e->next->next;
+		es[i*2+1]->adjacent_face = faces[i];
+		es[i*2]->adjacent_face = faces[i];
+
+
+	}
+	int f1 = nfaces[0]->totalEdges();
+	int f2 = nfaces[1]->totalEdges();
+	vertices.push_back(v);
+	for (int i = 0; i<totalEdges / 2; i++) {
+		halfedges.push_back(in[i]);
+		halfedges.push_back(out[i]);
+		if (i != 0) {
+			faces.push_back(nfaces[i]);
+		}
+
+	}
 }
+
 
 
 void myMesh::subdivisionCatmullClark()

@@ -155,11 +155,12 @@ void menu(int item)
 		}		
 	case MENU_SPLITFACE:
 		{
-			m->splitFaceTRIS(m->faces[0], new myPoint3D(0, 0, 0));
-			/*if (pickedpoint != NULL && closest_face != NULL)	
+			m->splitFaceQUADS(m->faces[0], new myPoint3D(0, 0, 0));
+			if (pickedpoint != NULL && closest_face != NULL)	
 				m->splitFaceTRIS(closest_face, pickedpoint);
-				*/
-			clear();		
+				
+			clear();
+			m->checkMesh();
 			m->computeNormals();
 			makeBuffers(m);
 			break;
