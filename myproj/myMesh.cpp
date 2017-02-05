@@ -5,6 +5,7 @@
 #include <map>
 #include <utility>
 #include <GL/glew.h>
+#include <algorithm>
 #include "myvector3d.h"
 
 using namespace std;
@@ -464,40 +465,134 @@ void myMesh::splitFaceQUADS(myFace *f, myPoint3D *p)
 
 void myMesh::subdivisionCatmullClark()
 {
-	//STEP 1 compute all centroids
-	for (vector<myFace *>::iterator it = faces.begin(); it != faces.end(); it++) {
-		myFace* f = (*it);
+	////
+	// centroid
+	///
+	std::vector<myPoint3D*> centroid = std::vector<myPoint3D*>(this->faces.size());
 
-		myPoint3D c;
-		myHalfedge* e = f->adjacent_halfedge;
+	int size = this->faces.size();
 
-		int totalVertices = 0;
-		do {
-			c += *e->source->point;
-			totalVertices++;
-			e = e->next;
-		} while (e = f->adjacent_halfedge);
+	for (int i = 0; i < size; i++)
+	{
+		auto faceCentroid = new myPoint3D(0, 0, 0);
 
-		c /= totalVertices;
+		auto f = this->faces[i]->adjacent_halfedge;
+		auto itef = this->faces[i]->adjacent_halfedge;
+
+		int count = 0;
+		do
+		{
+			*faceCentroid += *itef->source->point;
+			count++;
+			itef = itef->next;
+		} while (itef != f);
+
+		*faceCentroid = *faceCentroid / count;
+		centroid[i] = faceCentroid;
+		//      cout<<"face at "<< i << " is "<< this->faces[i] << " with " << this->faces[i]->index<<"\n ";
+		//      cout << "point:"<<count<<"  p"<<faceCentroid->X<<","<<faceCentroid->Y<<","<<faceCentroid->Z << "\n";
+		//splitFace(this->faces[i],faceCentroid);
 
 	}
-	
-
-	
-
-	//STEP 2 Caculate edge points
 
 
+	////
+	// hedge
+	////
 
-	//STEP 3 Caculate edge points
+	if (this->halfedges.size() % 2 != 0)
+	{
+		cout << "error" << std::endl;
+		exit(2);
+	}
+
+	int nbHalfedges = this->halfedges.size() / 2;
+	std::map<std::pair<int, int>, myPoint3D*> mapii = std::map<std::pair<int, int>, myPoint3D*>();
+
+	for (auto i : this->halfedges)
+	{
+		int min = std::min(i->index, i->twin->index);
+		int max = std::max(i->index, i->twin->index);
+		auto pair = std::make_pair(min, max);
+		auto result = mapii.find(pair);
+
+		//deja fais
+		if (result != mapii.end())
+		{
+			continue;
+		}
 
 
-	//STEP 4 vertex-edge connection
-		//add new edge points to mesh lists
+
+		mapii[pair] = new myPoint3D((*centroid[i->adjacent_face->index]
+			+ *centroid[i->twin->adjacent_face->index]
+			+ *i->source->point
+			+ *i->twin->source->point) / 4);
+
+		//      cout <<"edje "<< mapii[pair]->X <<","<< mapii[pair]->Y <<","<< mapii[pair]->Z << "\n";
+
+	}
 
 
+	/// vertices compute
+	auto newVerticePosition = std::vector<myPoint3D*>(this->vertices.size());
 
-	//STEP 5 face-edge connection with splitFaceQUADS()
+	for (int i = 0; i < this->vertices.size(); i++)
+	{
+		// compute N
+		auto q = myPoint3D(0, 0, 0);
+		auto r = myPoint3D(0, 0, 0);
+
+		myHalfedge* f = this->vertices[i]->originof;
+		myHalfedge* itef = this->vertices[i]->originof;
+		int n = 0;
+
+		do {
+			r += (*itef->source->point + *itef->twin->source->point) / 2;
+
+			q += *centroid[itef->twin->adjacent_face->index];
+
+			n++;
+
+			itef = itef->twin->next;
+
+		} while (itef != f);
+
+		// compute Q
+		// cout << "n = "<< n << "\n";
+		q = q / n;
+
+		// compute R
+		r = r / n;
+
+		// compute
+		myPoint3D vv = (q + r * 2 + *(this->vertices[i]->point) * (n - 3)) / n;
+
+		newVerticePosition[i] = new myPoint3D(vv);
+	}
+
+	// apply position
+	for (int i = 0; i < this->vertices.size(); i++)
+	{
+
+		delete this->vertices[i]->point;
+		this->vertices[i]->point = newVerticePosition[i];
+		//cout << this->vertices[i]->point->X << this->vertices[i]->point->Y <<this->vertices[i]->point->Z << "\n";
+	}
+
+
+	// split
+	for (auto splitedge : mapii)
+	{
+		this->splitEdge(this->halfedges[splitedge.first.second], splitedge.second);
+	}
+
+	for (int i = 0; i < centroid.size(); i++)
+	{
+		// cout << "face at "<< i << " is "<< this->faces[i] << " with " << this->faces[i]->index<<"\n ";
+		this->faces[i]->adjacent_halfedge = this->faces[i]->adjacent_halfedge->next;
+		this->splitFaceQUADS(this->faces[i], centroid[i]);
+	}
 
 
 }
